@@ -30,6 +30,7 @@ var Paddle = cc.Sprite.extend({
     _state:PADDLE_STATE_UNGRABBED,
     _rect:null,
     _classId:null,
+    movedState:null,
 
     ctor: function(){
         this._super();
@@ -55,6 +56,7 @@ var Paddle = cc.Sprite.extend({
             this._rect = cc.rect(0, 0, aTexture.width, aTexture.height);
         }
         _classId = 1;
+        this.movedState = false;
         return true;
     },
     isSuccess:function(){
@@ -107,6 +109,8 @@ var Paddle = cc.Sprite.extend({
         var target = event.getCurrentTarget();
         cc.assert(target._state == PADDLE_STATE_GRABBED, "Paddle - Unexpected state!");
         target._state = PADDLE_STATE_UNGRABBED;
+        target.movedState = true
+
     },
     touchDelegateRetain:function () {
     },
