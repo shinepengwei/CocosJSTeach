@@ -31,6 +31,7 @@ var Paddle = cc.Sprite.extend({
     _rect:null,
     _classId:null,
     movedState:null,
+    _touchState :true,//是否可以拖拽
 
     ctor: function(){
         this._super();
@@ -61,7 +62,7 @@ var Paddle = cc.Sprite.extend({
     },
     isSuccess:function(){
         var width = cc.director.getWinSize().width;
-        
+        if(this._touchState ) return false;
         if (this.x < width/2 && this._classId ==0){
             return true
         }
@@ -70,6 +71,9 @@ var Paddle = cc.Sprite.extend({
         }
         return false
 
+    },
+    setTouchState:function(st){
+    	this._touchState = st;
     },
     
     containsTouchLocation:function (touch) {
@@ -82,7 +86,9 @@ var Paddle = cc.Sprite.extend({
     },
 
     onTouchBegan:function (touch, event) {
-        var target = event.getCurrentTarget();
+    	var target = event.getCurrentTarget();
+    	if (!target._touchState) return false;
+        
         if (target._state != PADDLE_STATE_UNGRABBED) return false;
         if (!target.containsTouchLocation(touch)) return false;
 
