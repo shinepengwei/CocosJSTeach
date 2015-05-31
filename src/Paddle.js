@@ -32,7 +32,7 @@ var Paddle = cc.Sprite.extend({
     _classId:null,
     movedState:null,
     _touchState :true,//是否可以拖拽
-
+    initPos:null,
     ctor: function(){
         this._super();
         cc.eventManager.addListener({
@@ -52,28 +52,27 @@ var Paddle = cc.Sprite.extend({
             this._state = PADDLE_STATE_UNGRABBED;
         }
         if (aTexture instanceof cc.Texture2D) {
-            this._rect = cc.rect(0, 0, aTexture.width, aTexture.height);
+            this._rect = cc.rect(0, 0, 80, 80);
         } else if ((aTexture instanceof HTMLImageElement) || (aTexture instanceof HTMLCanvasElement)) {
-            this._rect = cc.rect(0, 0, aTexture.width, aTexture.height);
+            this._rect = cc.rect(0, 0, 80, 80);
         }
         _classId = 1;
         this.movedState = false;
         return true;
     },
-    isSuccess:function(){
+    isSuccess:function(_targetRect){
         var width = cc.director.getWinSize().width;
         if(this._touchState ) return false;
-        if (this.x < width/2 && this._classId ==0){
-            return true
-        }
-        if (this.x > width/2 && this._classId ==1){
+        if (cc.rectContainsPoint(_targetRect[this._classId],cc.p(this.x,this.y))){
             return true
         }
         return false
-
     },
     setTouchState:function(st){
     	this._touchState = st;
+    },
+    getTouchState:function () {
+        return this._touchState
     },
     
     containsTouchLocation:function (touch) {

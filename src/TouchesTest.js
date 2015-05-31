@@ -43,6 +43,7 @@ SPRITE_CLASS[1] =[
     res.CloseNormal_png5,
     res.CloseNormal_png6,
     res.CloseNormal_png7,
+    res.CloseNormal_png8,
     ]
 
 SPRITE_WIDTH = 80;
@@ -74,14 +75,16 @@ var PongLayer = cc.Layer.extend({
             rotation: 180
         });
         this.addChild(this.sprite, 0);
-        this._targetRect = []
-        var left_x =50;
-        var left_y =  this._winSize.height/2-130;
-        this._targetRect[0] = cc.rect(left_x, left_y,this._winSize.width/2-10 -left_x, this._winSize.height-100 -(left_y));
-        var right_x = this._winSize.width/2+10;
-        var right_y = left_y;
-        this._targetRect[1] = cc.rect(right_x, right_y,this._winSize.width-50-right_x, this._winSize.height-100 - right_y);
-        this._count = []
+        this._targetRect = [];
+        var left_y1 =  this._winSize.height/2-130;
+        var left_y2 = this._winSize.height-100
+        var left_x1 =50;
+        var left_x2 = this._winSize.width/2-80
+        var right_x1 = this._winSize.width/2-60;
+        var right_x2 = this._winSize.width-190
+        this._targetRect[0] = cc.rect(left_x1, left_y1, left_x2-left_x1,  left_y2-(left_y1));
+        this._targetRect[1] = cc.rect(right_x1, left_y1,right_x2 - right_x1, left_y2 - left_y1);
+        this._count = [];
         this._count[0] = 0;
         this._count[1] = 0;
         this._paddles = [];
@@ -93,7 +96,8 @@ var PongLayer = cc.Layer.extend({
                 var paddle = Paddle.paddleWithTexture(paddleTexture);
                 paddle.attr({scale:SPRITE_WIDTH/240});
                 paddle.x =  50+100 * index;
-                paddle.y = 15 ;
+                paddle.y = 45 ;
+                paddle.initPos = cc.p(paddle.x,paddle.y)
                 paddle._classId = i;
                 this._paddles.push(paddle);
                 this.addChild(paddle);
@@ -105,80 +109,91 @@ var PongLayer = cc.Layer.extend({
         
         //rect
         var title=new cc.LabelTTF("定价策略的灵活运用","Thonburi",50);
-        title.setPosition(this._winSize.width/2, this._winSize.height - 20);
+        title.setColor(cc.color(37, 162, 234, 255));
+        title.setPosition(this._winSize.width/2, this._winSize.height - 30);
         this.addChild(title);
         var draw = new cc.DrawNode();
         this.addChild(draw, 10);
-        draw.drawRect(cc.p(this._targetRect[0].x, this._targetRect[0].y), cc.p(this._targetRect[0].x + this._targetRect[0].width, this._targetRect[0].y + this._targetRect[0].height), null, 2, cc.color(255, 0, 255, 255));
-        draw.drawRect(cc.p(this._targetRect[1].x, this._targetRect[1].y), cc.p(this._targetRect[1].x + this._targetRect[1].width, this._targetRect[1].y + this._targetRect[1].height), null, 2, cc.color(255, 0, 255, 255));
+        draw.drawRect(cc.p(this._targetRect[0].x, this._targetRect[0].y), cc.p(this._targetRect[0].x + this._targetRect[0].width, this._targetRect[0].y + this._targetRect[0].height), null, 2, cc.color(37, 162, 234, 255));
+        draw.drawRect(cc.p(this._targetRect[1].x, this._targetRect[1].y), cc.p(this._targetRect[1].x + this._targetRect[1].width, this._targetRect[1].y + this._targetRect[1].height), null, 2, cc.color(37, 162, 234, 255));
         var l = new cc.LabelTTF("撇脂策略", "Thonburi", 30);
+        l.setColor(cc.color(37, 162, 234, 255));
         l.setPosition(this._targetRect[0].x+this._targetRect[0].width/2, this._targetRect[0].y+this._targetRect[0].height+20);
         this.addChild(l);
         var r = new cc.LabelTTF("渗透策略", "Thonburi", 30);
+        r.setColor(cc.color(37, 162, 234, 255));
         r.setPosition(this._targetRect[1].x+this._targetRect[1].width/2, this._targetRect[1].y+this._targetRect[1].height+20);
         this.addChild(r);
-        //buttong
-        var button = new ccui.Button();
-        button.setTouchEnabled(true);
-        button.loadTextures(res.B1_PNG, res.B2_PNG, "");
-        button.setTitleText("重置");
-        button.setPosition(cc.p(50,50));
-        button.addTouchEventListener(this.touchEvent,this);
-        this.addChild(button,20);
-
-        var button1 = new ccui.Button();
-        button1.setTouchEnabled(true);
-        button1.loadTextures(res.B1_PNG, res.B2_PNG, "");
-        button1.setTitleText("答案");
-        button1.setPosition(cc.p(50,100));
-        button1.addTouchEventListener(this.eventSuccess,this);
-        this.addChild(button1,20);
+        var item1 = new cc.MenuItemImage(res.B2_PNG, res.B2_PNG, this.touchEvent, this);
+        var item2 = new cc.MenuItemImage(res.B1_PNG, res.B1_PNG, this.eventSuccess, this);
+        item1.setPosition(cc.p(right_x2 + 95,left_y1 + 100));
+        item2.setPosition(cc.p(right_x2 + 95,left_y1 + 200));
+        var menu = new cc.Menu(item1, item2);
+        menu.x = 0;
+        menu.y = 0;
+        this.addChild(menu);
     },
-    initPosition:function(){
+    initGameState:function(){
     	this._count[0] = 0;
     	this._count[1] = 0;
+        if (this.stateLabel!= null) this.stateLabel.removeFromParent();
+        this.stateLabel = null;
+        this.stopAllActions()
     	for (var i = 0; i < this._paddles.length; i++) {
     		var paddle = this._paddles[i]
-    		paddle.x =  50+100 * i;
-    		paddle.y = 15 ;
+    		paddle.x = paddle.initPos.x;
+    		paddle.y = paddle.initPos.y ;
     		paddle.setTouchState(true);
+            paddle.stopAllActions()
     	}
     },
     //计算最终放置的位置
     getTarPosition:function(classId,index){
         var row = Math.floor(index/3);
         var column = index%3;
-        var y = this._targetRect[classId].y+this._targetRect[classId].height - (60 + row*(SPRITE_WIDTH+20));
-        var x = this._targetRect[classId].x + 20 + SPRITE_WIDTH/2+ column*(SPRITE_WIDTH + 20);
+        var y = this._targetRect[classId].y+this._targetRect[classId].height - (60 + row*(SPRITE_WIDTH+10));
+        var x = this._targetRect[classId].x + 5 + SPRITE_WIDTH/2+ column*(SPRITE_WIDTH + 10);
     	return cc.p(x,y)
     },
-    eventSuccess: function (sender, type) {
-    	if (type == ccui.Widget.TOUCH_ENDED) {
-            this._count[0] = 0;
-            this._count[1] = 0;
-    		for (var i = 0; i < this._paddles.length; i++) {
-                var classId = this._paddles[i]._classId;
-                this._paddles[i].runAction(cc.moveTo(1, this.getTarPosition(classId,this._count[classId])));
-                this._paddles[i].setTouchState(false);
-                this._count[classId]++;
-            }
-    	}
+    doSuccessComplete:function  () {
+        this._doSuccessComplete = true
     },
-    touchEvent: function (sender, type) {
-        if (type == ccui.Widget.TOUCH_ENDED) {
-            this.initPosition();
+    eventSuccess: function (sender) {
+        this._count[0] = 0;
+        this._count[1] = 0;
+        if (this.stateLabel!= null) this.stateLabel.removeFromParent();
+        this.stateLabel = null;
+		for (var i = 0; i < this._paddles.length; i++) {
+            var classId = this._paddles[i]._classId;
+            this._paddles[i].stopAllActions()
+            this._paddles[i].runAction(cc.moveTo(1, this.getTarPosition(classId,this._count[classId])));
+            this._paddles[i].setTouchState(false);
+            this._count[classId]++;
+            this._doSuccessComplete = false
+            this.runAction(cc.sequence(
+               cc.delayTime(1),
+               cc.callFunc(this.doSuccessComplete, this))
+            );
         }
     },
-    doTest:function(){
+    touchEvent: function (sender) {
+            this.initGameState();
+    },
+    doTestSuccess:function(){
         for (var i = 0; i < this._paddles.length; i++) {
-            if(!this._paddles[i].isSuccess()){
-            	//cc.log(i+",false")
+            if(!this._paddles[i].isSuccess(this._targetRect)){
                 return false;
             }
         }
-        //cc.log(i+",true")
         return true;
-        
+    },
+    doTestFailed:function(){
+        for (var i = 0; i < this._paddles.length; i++) {
+            if(this._paddles[i].getTouchState()){
+                return false;
+            }
+        }
+        return true;
     },
     updatePosition:function(){
         for (var i = 0; i < this._paddles.length; i++) {
@@ -193,6 +208,8 @@ var PongLayer = cc.Layer.extend({
                 	this._paddles[i].runAction(cc.moveTo(1, this.getTarPosition(1,this._count[1])));
                 	this._paddles[i].setTouchState(false);
                 	this._count[1]++;
+                }else{
+                    this._paddles[i].runAction(cc.moveTo(0.4, this._paddles[i].initPos));
                 }
                 this._paddles[i].movedState = false;
             }
@@ -200,8 +217,23 @@ var PongLayer = cc.Layer.extend({
     },
     update:function (delta) {
     	this.updatePosition();
-    	if(this.doTest()){
-            cc.log("isSuccess");
+        if (this.stateLabel !=null) return false;
+        if (this._doSuccessComplete != null && this._doSuccessComplete == false) return false;
+    	if(this.doTestSuccess()){
+            var r = new cc.LabelTTF("游戏成功", "Arial", 30);
+            r.setPosition(this._targetRect[1].x+this._targetRect[1].width + 90, this._targetRect[1].y);
+            this.addChild(r);
+            r.setColor(cc.color(37, 162, 234, 255));
+            this.stateLabel = r
+        }else{
+            if (this.doTestFailed()){
+                var r = new cc.LabelTTF("失败请重置", "Arial", 30);
+                r.setPosition(this._targetRect[1].x+this._targetRect[1].width + 90, this._targetRect[1].y);
+                this.addChild(r);
+                r.setColor(cc.color(37, 162, 234, 255));
+                this.stateLabel = r
+            }
+            
         }
     }
 });
